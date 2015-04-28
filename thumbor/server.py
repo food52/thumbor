@@ -94,8 +94,17 @@ def main(arguments=None):
 
     server.start(1)
 
-    # Taken from gist.github.com/mywaiting/4643396.
+    # Adapted from gist.github.com/mywaiting/4643396.  Note: This function is
+    # only ever executed as a callback by the main IO loop.  Therefore all
+    # calls to it are guaranteed to be serialized, so it doesn't have to be
+    # either thread-safe or reentrant.
+    global shutting_down
+    shutting_down = False
     def shutdown():
+        global shutting_down
+        if shutting_down:
+            return
+        shutting_down = True
         logging.critical('Stopping server. No longer accepting connections')
         server.stop()
         logging.critical('Shutdown in at most %d seconds',
@@ -110,8 +119,10 @@ def main(arguments=None):
                 logging.critical('Stopping IO loop and exiting')
                 io_loop.stop()
         stop_loop()
+
     def sig_handler(sig, frame):
-        logging.warning('Caught signal: %s', sig)
+        # Stdlib Logging functions are not reentrant.
+        # logging.warning('Caught signal: %s', sig)
         tornado.ioloop.IOLoop.instance().add_callback_from_signal(shutdown)
     signal.signal(signal.SIGTERM, sig_handler)
     signal.signal(signal.SIGINT, sig_handler)
