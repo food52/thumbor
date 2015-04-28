@@ -48,7 +48,8 @@ def main(arguments=None):
       logging.basicConfig(
           level=getattr(logging, server_parameters.log_level.upper()),
           format=config.THUMBOR_LOG_FORMAT,
-          datefmt=config.THUMBOR_LOG_DATE_FORMAT
+          datefmt=config.THUMBOR_LOG_DATE_FORMAT,
+          filename=server_parameters.log_file
       )
 
     importer = Importer(config)
