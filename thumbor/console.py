@@ -22,6 +22,7 @@ def get_server_parameters(arguments=None):
     parser.add_option("-c", "--conf", dest="conf", default="", help="The path of the configuration file to use for this thumbor instance [default: %default].")
     parser.add_option("-k", "--keyfile", dest="keyfile", default="", help="The path of the security key file to use for this thumbor instance [default: %default].")
     parser.add_option("-l", "--log-level", dest="log_level", default="warning", help="The log level to be used. Possible values are: debug, info, warning, error, critical or notset. [default: %default].")
+    parser.add_option("-o", "--log_file", dest="log_file", default="", help="Path of the file to log to.")
     parser.add_option("-a", "--app", dest="app", default='thumbor.app.ThumborServiceApp', help="A custom app to use for this thumbor server in case you subclassed ThumborServiceApp [default: %default].")
 
     (options, args) = parser.parse_args(arguments)
@@ -32,6 +33,7 @@ def get_server_parameters(arguments=None):
     conf = options.conf or None
     keyfile = options.keyfile or None
     log_level = options.log_level
+    log_file = options.log_file
 
     return ServerParameters(port=port,
                             ip=ip,
@@ -39,4 +41,5 @@ def get_server_parameters(arguments=None):
                             keyfile=keyfile,
                             log_level=log_level,
                             app_class=options.app,
-                            fd=fd)
+                            fd=fd,
+                            log_file=log_file)
