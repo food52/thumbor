@@ -12,6 +12,8 @@ import sys
 import logging, logging.config
 import os
 import socket
+import signal
+import time
 from os.path import expanduser, dirname
 
 import tornado.ioloop
@@ -91,6 +93,28 @@ def main(arguments=None):
         server.bind(context.server.port, context.server.ip)
 
     server.start(1)
+
+    # Taken from gist.github.com/mywaiting/4643396.
+    def shutdown():
+        logging.critical('Stopping server. No longer accepting connections')
+        server.stop()
+        logging.critical('Shutdown in at most %d seconds',
+                         config.MAX_WAIT_BEFORE_SHUTDOWN)
+        io_loop = tornado.ioloop.IOLoop.instance()
+        deadline = time.time() + config.MAX_WAIT_BEFORE_SHUTDOWN
+        def stop_loop():
+            now = time.time()
+            if now < deadline and (io_loop._callbacks or io_loop._timeouts):
+                io_loop.add_timeout(min(now + 1, deadline), stop_loop)
+            else:
+                logging.critical('Stopping IO loop and exiting')
+                io_loop.stop()
+        stop_loop()
+    def sig_handler(sig, frame):
+        logging.warning('Caught signal: %s', sig)
+        tornado.ioloop.IOLoop.instance().add_callback_from_signal(shutdown)
+    signal.signal(signal.SIGTERM, sig_handler)
+    signal.signal(signal.SIGINT, sig_handler)
 
     try:
         logging.debug('thumbor running at %s:%d' % (context.server.ip, context.server.port))
