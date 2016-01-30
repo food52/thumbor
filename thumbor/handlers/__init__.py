@@ -62,29 +62,29 @@ class BaseHandler(tornado.web.RequestHandler):
 
         req.extension = splitext(req.image_url)[-1].lower()
 
-        should_store = self.context.config.RESULT_STORAGE_STORES_UNSAFE or not self.context.request.unsafe
-        if self.context.modules.result_storage and should_store:
-            start = datetime.datetime.now()
-            result = self.context.modules.result_storage.get()
-            finish = datetime.datetime.now()
-            self.context.statsd_client.timing('result_storage.incoming_time', (finish - start).total_seconds() * 1000)
-            if result is None:
-                self.context.statsd_client.incr('result_storage.miss')
-            else:
-                self.context.statsd_client.incr('result_storage.hit')
-                self.context.statsd_client.incr('result_storage.bytes_read', len(result))
+        # should_store = self.context.config.RESULT_STORAGE_STORES_UNSAFE or not self.context.request.unsafe
+        # if self.context.modules.result_storage and should_store:
+            # start = datetime.datetime.now()
+            # result = self.context.modules.result_storage.get()
+            # finish = datetime.datetime.now()
+            # self.context.statsd_client.timing('result_storage.incoming_time', (finish - start).total_seconds() * 1000)
+            # if result is None:
+            #     self.context.statsd_client.incr('result_storage.miss')
+            # else:
+            #     self.context.statsd_client.incr('result_storage.hit')
+            #     self.context.statsd_client.incr('result_storage.bytes_read', len(result))
 
-            if result is not None:
-                mime = BaseEngine.get_mimetype(result)
-                if mime == 'image/gif' and self.context.config.USE_GIFSICLE_ENGINE:
-                    self.context.request.engine = self.context.modules.gif_engine
-                    self.context.request.engine.load(result, '.gif')
-                else:
-                    self.context.request.engine = self.context.modules.engine
+            # if result is not None:
+            #     mime = BaseEngine.get_mimetype(result)
+            #     if mime == 'image/gif' and self.context.config.USE_GIFSICLE_ENGINE:
+            #         self.context.request.engine = self.context.modules.gif_engine
+            #         self.context.request.engine.load(result, '.gif')
+            #     else:
+            #         self.context.request.engine = self.context.modules.engine
 
-                logger.debug('[RESULT_STORAGE] IMAGE FOUND: %s' % req.url)
-                self.finish_request(self.context, result)
-                return
+            #     logger.debug('[RESULT_STORAGE] IMAGE FOUND: %s' % req.url)
+            #     self.finish_request(self.context, result)
+            #     return
 
         if conf.MAX_WIDTH and (not isinstance(req.width, basestring)) and req.width > conf.MAX_WIDTH:
             req.width = conf.MAX_WIDTH
