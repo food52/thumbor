@@ -14,6 +14,8 @@ import logging.config
 
 import os
 import socket
+import signal
+import time
 from os.path import expanduser, dirname
 
 import tornado.ioloop
@@ -51,7 +53,8 @@ def main(arguments=None):
       logging.basicConfig(
           level=getattr(logging, server_parameters.log_level.upper()),
           format=config.THUMBOR_LOG_FORMAT,
-          datefmt=config.THUMBOR_LOG_DATE_FORMAT
+          datefmt=config.THUMBOR_LOG_DATE_FORMAT,
+          filename=server_parameters.log_file
       )
 
     importer = Importer(config)
@@ -98,6 +101,39 @@ def main(arguments=None):
         server.bind(context.server.port, context.server.ip)
 
     server.start(1)
+
+    # Adapted from gist.github.com/mywaiting/4643396.  Note: This function is
+    # only ever executed as a callback by the main IO loop.  Therefore all
+    # calls to it are guaranteed to be serialized, so it doesn't have to be
+    # either thread-safe or reentrant.
+    global shutting_down
+    shutting_down = False
+    def shutdown():
+        global shutting_down
+        if shutting_down:
+            return
+        shutting_down = True
+        logging.critical('Stopping server. No longer accepting connections')
+        server.stop()
+        logging.critical('Shutdown in at most %d seconds',
+                         config.MAX_WAIT_BEFORE_SHUTDOWN)
+        io_loop = tornado.ioloop.IOLoop.instance()
+        deadline = time.time() + config.MAX_WAIT_BEFORE_SHUTDOWN
+        def stop_loop():
+            now = time.time()
+            if now < deadline and (io_loop._callbacks or io_loop._timeouts):
+                io_loop.add_timeout(min(now + 1, deadline), stop_loop)
+            else:
+                logging.critical('Stopping IO loop and exiting')
+                io_loop.stop()
+        stop_loop()
+
+    def sig_handler(sig, frame):
+        # Stdlib Logging functions are not reentrant.
+        # logging.warning('Caught signal: %s', sig)
+        tornado.ioloop.IOLoop.instance().add_callback_from_signal(shutdown)
+    signal.signal(signal.SIGTERM, sig_handler)
+    signal.signal(signal.SIGINT, sig_handler)
 
     try:
         logging.debug('thumbor running at %s:%d' % (context.server.ip, context.server.port))

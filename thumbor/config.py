@@ -328,6 +328,11 @@ Config.define(
 Config.define('ERROR_FILE_LOGGER', None, 'File of error log as json', 'Errors')
 Config.define('ERROR_FILE_NAME_USE_CONTEXT', False, 'File of error log name is parametrized with context attribute', 'Errors')
 
+# PROCESS CONTROL
+Config.define(
+    'MAX_WAIT_BEFORE_SHUTDOWN', 5,
+    'Wait at most this long for in-progress requests to finish before shutting down.', 'Process Controll')
+
 
 def generate_config():
     config.generate_config()
