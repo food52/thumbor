@@ -18,9 +18,11 @@ infrastructure tries to route resizing requests to thumbor only when they
 # Branches, Tags
 
 Our production system is currently branched of off thumbor version 4.11.1;
-the ref is `4.11.1-f52v1`.  Version 5 appears to have involved a major
-refactoring, so there will probably be some pain in merging our changes with
-upstream
+the ref is `4.11.1-f52v1`.  Our development is on `food52-mainline`, to keep
+`master` in the same state as the upstream `master`.
+
+Version 5 appears to have involved a major refactoring, so there will
+probably be some pain in merging our changes with upstream
 
 # Original README
 
