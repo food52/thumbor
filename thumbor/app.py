@@ -7,6 +7,9 @@
 # Licensed under the MIT license:
 # http://www.opensource.org/licenses/mit-license
 # Copyright (c) 2011 globo.com timehome@corp.globo.com
+from ddtrace import tracer, patch
+patch(tornado=True)
+
 import tornado.web
 import tornado.ioloop
 
